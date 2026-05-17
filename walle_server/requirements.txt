@@ -1,0 +1,35 @@
+# WALL-E Python Backend — requirements.txt
+# Install with: pip install -r requirements.txt
+#
+# After installing, download models BEFORE connecting to ESP32 WiFi:
+#   python -c "from faster_whisper import WhisperModel; WhisperModel('tiny', device='cpu', compute_type='int8')"
+#   python -c "from transformers import pipeline; pipeline('text-classification', model='j-hartmann/emotion-english-distilroberta-base', top_k=None)"
+#
+# Then generate placeholder sounds:
+#   python generate_sounds.py
+#
+# Then train the emotion classifier (requires internet, ~25 min on M1):
+#   python train_emotion_model.py
+#   python train_fusion.py
+
+# ── Web server ────────────────────────────────────────────────────────────────
+flask>=3.0.0
+
+# ── Speech-to-Text ────────────────────────────────────────────────────────────
+faster-whisper>=1.0.0
+
+# ── NLP / Emotion classification ──────────────────────────────────────────────
+transformers>=4.46.0
+torch>=2.0.0
+accelerate>=1.1.0
+datasets>=2.0.0
+
+# ── Acoustic feature extraction (multimodal pipeline) ────────────────────────
+librosa>=0.10.0
+
+# ── Sound playback ────────────────────────────────────────────────────────────
+pygame>=2.5.0
+
+# ── Audio file generation (placeholder sounds) ────────────────────────────────
+soundfile>=0.12.0
+numpy>=1.24.0

@@ -1,0 +1,70 @@
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# ── Machine learning models (large binary files) ──────────────────────────────
+# Trained model weights — regenerate with train_emotion_model.py + train_fusion.py
+walle_server/models/text_emotion/
+walle_server/models/text_emotion_checkpoints/
+walle_server/models/fusion_mlp.pt
+
+# Keep the config and label files — they are small and human-readable
+!walle_server/models/text_emotion_labels.json
+!walle_server/models/fusion_config.json
+
+# HuggingFace cache (very large, stored globally at ~/.cache/huggingface)
+.cache/
+
+# ── Environment / secrets ─────────────────────────────────────────────────────
+.env
+.env.local
+*.env
+
+# ── Arduino / ESP32 build artifacts ──────────────────────────────────────────
+walle_esp32/build/
+walle_esp32/.arduino_secrets/
+*.bin
+*.elf
+*.map
+*.hex
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# ── IDE / editors ─────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/

@@ -1,0 +1,29 @@
+{
+  "id2label": {
+    "0": "happy",
+    "1": "sad",
+    "2": "angry",
+    "3": "surprised",
+    "4": "curious",
+    "5": "neutral"
+  },
+  "label2id": {
+    "happy": 0,
+    "sad": 1,
+    "angry": 2,
+    "surprised": 3,
+    "curious": 4,
+    "neutral": 5
+  },
+  "internal_labels": [
+    "happy",
+    "sad",
+    "angry",
+    "surprised",
+    "curious",
+    "neutral"
+  ],
+  "base_model": "distilbert-base-uncased",
+  "test_accuracy": 0.9615,
+  "trained_on": "dair-ai/emotion"
+}
