@@ -325,3 +325,12 @@ Speak clearly near the robot when idle. Recording triggers automatically on voic
 - Personality drift — maintain a session-level mood state that influences response intensity
 - WebSocket status push instead of 1-second polling in the dashboard
 - Upgrade Whisper model from `tiny` to `base` for improved transcription accuracy
+
+---
+
+## 3D Models & Chassis
+
+The physical chassis of the robot is based on a 3D-printable model. 
+
+* **3D Files:** The complete set of 3D models and print files can be found on [Thingiverse (Thing 5957438)](https://www.thingiverse.com/thing:5957438).
+* **Original Creator:** Designed by [@professorboots](https://www.youtube.com/@professorboots) on YouTube. Refer to their channel for detailed assembly guides and physical construction tutorials.
