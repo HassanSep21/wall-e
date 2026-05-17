@@ -150,7 +150,7 @@ User speaks near WALL-E
         ▼
 INMP441 mic → I2S → ESP32 Core 0 (audioTask)
         │
-        │  Web UI button pressed  (manual trigger)
+        │  RMS energy > VAD threshold  (or web UI button pressed)
         ▼
 ESP32 buffers 2.5s of 16kHz 16-bit PCM  (~80 KB)
         │
@@ -158,9 +158,6 @@ ESP32 buffers 2.5s of 16kHz 16-bit PCM  (~80 KB)
 HTTP POST → 192.168.4.2:5001/process  (raw audio bytes)
         │
         ├── faster-whisper tiny → transcript text       (~200-400ms)
-        │
-        ├── Wake phrase check ("hey buddy")
-        │       if not found → return idle, ESP32 does nothing
         │
         ├── DistilBERT emotion classifier → emotion label  (~150ms)
         │
@@ -182,8 +179,6 @@ HTTP POST → 192.168.4.2:5001/process  (raw audio bytes)
                 │
                 ▼
         Sequence completes → return to IDLE → resume VAD listening
-
-End-to-end latency: ~800ms – 1.5s
 ```
 
 ---
@@ -191,7 +186,7 @@ End-to-end latency: ~800ms – 1.5s
 ## The 5 Key AI Features
 
 ### 1. Offline Speech Recognition
-The INMP441 microphone captures audio at 16kHz via I2S on a dedicated FreeRTOS task (Core 0). Audio capture is triggered either by the "Listen Now" button on the web dashboard or automatically via the wake phrase detection filter on the Python side. The 2.5-second audio buffer is transmitted over WiFi to the Python server where `faster-whisper` (CTranslate2-optimized Whisper) transcribes it using the `tiny` model in 200–400ms. The entire pipeline runs offline — no cloud API, no internet dependency.
+The INMP441 microphone captures audio at 16kHz via I2S on a dedicated FreeRTOS task (Core 0). Audio capture runs continuously on a dedicated FreeRTOS task (Core 0). A Voice Activity Detection algorithm using RMS energy thresholding monitors the mic and triggers recording automatically when speech volume exceeds a calibrated threshold, with the web dashboard button available as a manual fallback. The 2.5-second audio buffer is transmitted over WiFi to the Python server where `faster-whisper` (CTranslate2-optimized Whisper) transcribes it using the `tiny` model in 200–400ms. The entire pipeline runs offline — no cloud API, no internet dependency.
 
 ### 2. Fine-tuned Emotion Classification
 A DistilBERT model was fine-tuned from scratch on the `dair-ai/emotion` dataset (20,000 labeled English sentences, 6 emotion classes). Training ran for 3 epochs on Apple Silicon MPS. The resulting model achieves ~88% test accuracy and runs inference in ~150ms. This is not a pretrained model being called as a black box — the weights are trained specifically for this project and stored locally.
@@ -199,8 +194,8 @@ A DistilBERT model was fine-tuned from scratch on the `dair-ai/emotion` dataset 
 ### 3. Multimodal Sentiment Architecture
 The NLP pipeline is architected for multimodal emotion fusion. Text embeddings (CLS token, 768-dim) from DistilBERT are concatenated with acoustic features extracted by librosa (13 MFCC means, 13 MFCC standard deviations, pitch, RMS energy, zero-crossing rate — 29 dimensions total) and passed through a two-layer MLP fusion network. The current deployment uses text-only classification due to the domain gap between simulated and real acoustic training data; the fusion model is trained and present in the codebase as an architectural component.
 
-### 4. Wake Phrase Detection + Context-aware Command Routing
-A wake phrase filter ("hey buddy" and phonetic variants) gates the full inference pipeline on the Python side — audio without the trigger phrase is discarded after STT without invoking the NLP or sound engine. After wake phrase detection, a regex-based command rule engine maps the stripped transcript to 10 action categories (dance, wave, spin, look, sleep, stop, forward, backward, left, right). Rule ordering is deliberately prioritised — directional movement commands are matched before more general patterns to prevent ambiguity. Emotion and command are treated as independent outputs: emotion drives the face and sound, command drives the body.
+### 4. Context-aware Command Routing
+A regex-based command rule engine maps the transcript to 10 action categories (dance, wave, spin, look, sleep, stop, forward, backward, left, right). Rule ordering is deliberately prioritised — directional movement commands are matched before more general patterns to prevent ambiguity. Emotion and command are treated as independent outputs: emotion drives the face and sound, command drives the body.
 
 ### 5. Emotion-driven Expression and Sound Response
 The robot's response to any input is conditioned on both the detected command and emotion simultaneously. The TFT renders six distinct eye geometries (drawn programmatically using primitive shapes — no image assets) with colour coding per emotion and a persistent idle blink animation. Sound selection uses a `(command, emotion)` lookup matrix — the same "dance" command produces a different sound when the speaker sounds happy versus sad. The entire response — face, motion sequence, and sound — is coordinated by a non-blocking state machine on the ESP32 that uses `millis()` timestamps throughout, with no blocking `delay()` calls in the main loop.
@@ -285,12 +280,7 @@ Verify the printed IP matches `PYTHON_SERVER_IP` in the sketch. Then press RESET
 
 ## Voice Commands
 
-Say the wake phrase first, then a command:
-
-| Wake phrase | Command examples |
-|---|---|
-| "Hey buddy ..." | "... dance", "... wave", "... spin" |
-| "Wake up ..." | "... go forward", "... move left" |
+Speak clearly near the robot when idle. Recording triggers automatically on voice activity:
 
 | Command | Trigger words | Action |
 |---|---|---|
@@ -324,7 +314,6 @@ Say the wake phrase first, then a command:
 ## Known Limitations
 
 - **Acoustic fusion gap** — the multimodal fusion model was trained on simulated acoustic features (emotion-conditioned Gaussian distributions) due to the absence of a paired audio+label dataset. Real mic audio does not match the training distribution, so the fusion model is disabled at inference and text-only classification is used. A proper deployment would require collecting real labeled speech audio.
-- **Power instability** — two 3.7V Li-Po cells in series (7.4V) cause brown-out resets when servos and motors draw simultaneous current spikes. A software brown-out disable is applied as a workaround. Proper fix is separate power rails for logic and actuators with bulk decoupling capacitors.
 - **Speaker** — the MAX98357 I2S amplifier on this unit is non-functional. Audio output uses the laptop's speakers via pygame.
 
 ---
